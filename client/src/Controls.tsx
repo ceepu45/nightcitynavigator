@@ -1,4 +1,4 @@
-import { IconButton, Group, Stack } from "@chakra-ui/react";
+import { Button, IconButton, Group, Stack } from "@chakra-ui/react";
 import { Tooltip } from "@/components/ui/tooltip";
 import { LuZoomIn, LuZoomOut, LuSquare, LuCircle, LuLocate, LuLocateFixed } from "react-icons/lu";
 import useStateStore from "@/stateStore";
@@ -54,14 +54,15 @@ export default function Controls() {
                 </Tooltip>
                 <Tooltip content="Toggle Logging" openDelay={200} closeDelay={100}>
                     <IconButton
+                        {...recording && { bg: "#f00" }}
                         aria-label="Toggle Logging"
                         rounded="full"
                         onClick={() => setRecording(!recording)}
                     >
-                        {recording ? <LuSquare fill="#f00" /> : <LuCircle fill="#f00" />}
+                        {recording ? <LuSquare fill="#000" /> : <LuCircle fill="#d00" />}
                     </IconButton>
                 </Tooltip>
-            </Stack>
+            </Stack >
         </>
     );
 }

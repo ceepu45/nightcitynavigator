@@ -8,6 +8,9 @@ import "./Map.css";
 export default function Map() {
     const mapContainer = useRef(null);
     const setMap = useStateStore((state) => state.setMap);
+    const setPlayerPosition = useStateStore((state) => state.setPlayerPosition);
+    const clearPlayerPosition = useStateStore((state) => state.clearPlayerPosition);
+    const setTracking = useStateStore((state) => state.setTracking);
 
     useEffect(() => {
         let bounds = new LngLatBounds([-0.1, -0.1], [0.1, 0.1]);
@@ -41,7 +44,21 @@ export default function Map() {
             maxZoom: 19,
             maxBounds: bounds
         });
+
+        // Disable tracking when starting a drag.
+        map.on("mousedown", (_) => setTracking(false));
+
         setMap(map);
+    }, []);
+
+    useEffect(() => {
+        function update() {
+            fetch("/api/location")
+                .then(response => response.json())
+                .then(setPlayerPosition)
+                .catch(clearPlayerPosition);
+        }
+        setInterval(update, 1000);
     }, []);
 
     return <div ref={mapContainer} className="map" />;
