@@ -1,0 +1,48 @@
+import { useEffect, useRef } from "react";
+import maplibregl, { LngLatBounds } from "maplibre-gl";
+import "maplibre-gl/dist/maplibre-gl.css";
+import useStateStore from "@/stateStore";
+
+import "./Map.css";
+
+export default function Map() {
+    const mapContainer = useRef(null);
+    const setMap = useStateStore((state) => state.setMap);
+
+    useEffect(() => {
+        let bounds = new LngLatBounds([-0.1, -0.1], [0.1, 0.1]);
+        const map = new maplibregl.Map({
+            container: mapContainer.current!,
+            style: {
+                "version": 8,
+                "sources": {
+                    "raster-tiles": {
+                        "type": "raster",
+                        "tiles": [
+                            "https://maps.cpusocket.net/tiles/nightcity/{z}/{x}/{y}.png"
+                        ],
+                        "tileSize": 256,
+                        "attribution": "Game data (c) CDProjektRed, Map (c) Night City Mapping Project and contributors"
+                    }
+                },
+                "layers": [
+                    {
+                        "id": "main-tiles",
+                        "type": "raster",
+                        "source": "raster-tiles",
+                        "minzoom": 11,
+                        "maxzoom": 20
+                    }
+                ]
+            },
+            center: [0.0, 0.0],
+            zoom: 14,
+            minZoom: 11,
+            maxZoom: 19,
+            maxBounds: bounds
+        });
+        setMap(map);
+    }, []);
+
+    return <div ref={mapContainer} className="map" />;
+}
