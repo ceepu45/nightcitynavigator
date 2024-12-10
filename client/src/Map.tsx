@@ -11,6 +11,7 @@ export default function Map() {
     const setPlayerPosition = useStateStore((state) => state.setPlayerPosition);
     const clearPlayerPosition = useStateStore((state) => state.clearPlayerPosition);
     const setTracking = useStateStore((state) => state.setTracking);
+    const requestReverseGeocodingLookup = useStateStore((state) => state.requestReverseGeocodingLookup);
 
     useEffect(() => {
         let bounds = new LngLatBounds([-0.1, -0.1], [0.1, 0.1]);
@@ -35,7 +36,7 @@ export default function Map() {
                         "source": "raster-tiles",
                         "minzoom": 11,
                         "maxzoom": 20
-                    }
+                    },
                 ]
             },
             center: [0.0, 0.0],
@@ -47,6 +48,7 @@ export default function Map() {
 
         // Disable tracking when starting a drag.
         map.on("mousedown", (_) => setTracking(false));
+        map.on("contextmenu", (e) => requestReverseGeocodingLookup(e.lngLat));
 
         setMap(map);
     }, []);

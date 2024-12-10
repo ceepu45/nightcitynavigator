@@ -1,4 +1,4 @@
-import { Button, IconButton, Group, Stack } from "@chakra-ui/react";
+import { IconButton, Group, Stack } from "@chakra-ui/react";
 import { Tooltip } from "@/components/ui/tooltip";
 import { LuZoomIn, LuZoomOut, LuSquare, LuCircle, LuLocate, LuLocateFixed } from "react-icons/lu";
 import useStateStore from "@/stateStore";

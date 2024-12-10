@@ -1,17 +1,32 @@
-import { Stack, Box, Button, IconButton, Card, Input, Field, defineStyle } from "@chakra-ui/react";
-import { LuArrowLeft } from "react-icons/lu";
+import { Stack, Box, Button, IconButton, Card, Input, InputProps, Field, defineStyle } from "@chakra-ui/react";
+import { Alert } from "@/components/ui/alert";
+import { LuArrowLeft, LuSearch } from "react-icons/lu";
 import useStateStore from "@/stateStore";
 
-function SearchInput({ label }: { label: string }) {
+interface SearchInputProps extends InputProps {
+    label: string
+}
+function SearchInput({ label, ...input }: SearchInputProps) {
     return (
         <Field.Root>
-            <Input className="peer" placeholder="" />
+            <Input className="peer" placeholder="" {...input} />
             <Field.Label css={floatingStyles}>{label}</Field.Label>
         </Field.Root>
     );
 }
 
-function DirectionInput({ onNavigate }: { onNavigate: () => void }) {
+function DirectionInput() {
+    const requestGeocodingLookup = useStateStore((state) => state.requestGeocodingLookup);
+    const requestDirections = useStateStore((state) => state.requestDirections);
+    const searchText = useStateStore((state) => state.dest_search);
+    const updateSearchBox = useStateStore((state) => state.updateSearchBox);
+    const destValid = useStateStore((state) => state.destination != null);
+    const playerValid = useStateStore((state) => state.playerValid);
+
+    const navValid = destValid && playerValid;
+
+    const showWarning = destValid && !playerValid;
+
     return (
         <Card.Root
             zIndex="10"
@@ -23,15 +38,25 @@ function DirectionInput({ onNavigate }: { onNavigate: () => void }) {
             <Card.Body gap="2">
                 <Card.Title>Navigation</Card.Title>
                 <Stack gap="5">
-                    <SearchInput label="Destination" />
-                    <Button onClick={onNavigate}>Navigate</Button>
+                    <Stack gap="3" direction="row">
+                        <SearchInput
+                            label="Destination"
+                            value={searchText}
+                            onChange={(e) => updateSearchBox(e.target.value)}
+                            onKeyDown={e => (e.key === "Enter") && requestGeocodingLookup(searchText)}
+                        />
+                        <IconButton onClick={() => requestGeocodingLookup(searchText)}><LuSearch /></IconButton>
+                    </Stack>
+                    {showWarning && <Alert status="error" title="Waiting for player position" />}
+                    <Button disabled={!navValid} onClick={requestDirections}>Navigate</Button>
                 </Stack>
             </Card.Body>
         </Card.Root>
     );
 }
 
-function LiveNavigation({ onBack }: { onBack: () => void }) {
+function LiveNavigation() {
+    const exitNavigation = useStateStore((state) => state.exitNavigation);
     return (
         <Card.Root
             zIndex="10"
@@ -46,7 +71,7 @@ function LiveNavigation({ onBack }: { onBack: () => void }) {
                     pos="absolute"
                     top="5"
                     right="5"
-                    onClick={onBack}
+                    onClick={exitNavigation}
                 ><LuArrowLeft /></IconButton>
             </Box>
             <Card.Body gap="2">
@@ -61,18 +86,17 @@ function LiveNavigation({ onBack }: { onBack: () => void }) {
 
 export default function Navigation() {
     const navigating = useStateStore((state) => state.navigating);
-    const setNavigating = useStateStore((state) => state.setNavigating);
     // TODO settings button for navigation settings
     // TODO method to set "from" to "current location" widget. For now, always assume "from" current location.
     // TODO switch to live directions when a destination is entered
 
     if (navigating) {
         return (
-            <LiveNavigation onBack={() => setNavigating(false)} />
+            <LiveNavigation />
         );
     } else {
         return (
-            <DirectionInput onNavigate={() => setNavigating(true)} />
+            <DirectionInput />
         );
     }
 
