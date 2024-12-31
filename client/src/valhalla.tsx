@@ -1,4 +1,4 @@
-import { LngLat } from "maplibre-gl";
+import { LngLat, MercatorCoordinate } from "maplibre-gl";
 import { Trip } from "./valhallaTypes";
 
 
@@ -27,7 +27,7 @@ export function createDirectionsRequest(src: LngLat, dst: LngLat) {
 }
 
 function decodeLine(line: string) {
-    const coordinates = []
+    const coordinates: [number, number][] = []
     let lat = 0;
     let lng = 0;
     const factor = 1.0 / Math.pow(10, 6);
@@ -68,10 +68,61 @@ function decodeLine(line: string) {
 }
 
 export function parsePolylines(trip: Trip) {
-    const route = []
+    const route: [number, number][] = []
     for (const leg of trip.legs) {
         route.push(...decodeLine(leg.shape));
     }
 
     return route;
+}
+
+export function parseManeuvers(trip: Trip) {
+    return trip.legs.flatMap((leg, idx, legs) => {
+        if (idx !== 0) {
+            const offset = legs[idx - 1].shape.length;
+            return leg.maneuvers.map(m => {
+                m.begin_shape_index += offset;
+                m.end_shape_index += offset;
+                return m;
+            });
+        } else {
+            return leg.maneuvers;
+        }
+    });
+}
+
+export function projectToSegment(segmentStart: [number, number], segmentEnd: [number, number], position: LngLat) {
+    const segmentStartMerc = MercatorCoordinate.fromLngLat(segmentStart, 0);
+    const segmentEndMerc = MercatorCoordinate.fromLngLat(segmentEnd, 0);
+    const positionMerc = MercatorCoordinate.fromLngLat(position, 0);
+
+    // Subtract start and end to get segment vector, and position vector.
+    const segX = segmentEndMerc.x - segmentStartMerc.x;
+    const segY = segmentEndMerc.y - segmentStartMerc.y;
+
+    const posX = positionMerc.x - segmentStartMerc.x;
+    const posY = positionMerc.y - segmentStartMerc.y;
+
+    const dotProduct = segX * posX + segY * posY;
+    const segLengthSq = segX * segX + segY * segY;
+
+
+    // Calculate percent along vector
+    let percent;
+    if (segLengthSq == 0.0) {
+        percent = 0
+    } else {
+        percent = dotProduct / segLengthSq;
+    }
+
+
+
+    const point = new MercatorCoordinate(segmentStartMerc.x + segX * percent, segmentStartMerc.y + segY * percent);
+
+    const deltaX = positionMerc.x - point.x;
+    const deltaY = positionMerc.y - point.y;
+    const scale = 1 / point.meterInMercatorCoordinateUnits();
+    const distanceSq = (deltaX * deltaX + deltaY * deltaY) * scale * scale;
+
+    return { percent, distanceSq, point };
 }

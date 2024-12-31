@@ -57,6 +57,9 @@ function DirectionInput() {
 
 function LiveNavigation() {
     const exitNavigation = useStateStore((state) => state.exitNavigation);
+    const maneuver = useStateStore((state) => state.navRoute ? state.navRoute.maneuvers[state.currentManeuver] : null);
+
+
     return (
         <Card.Root
             zIndex="10"
@@ -78,14 +81,14 @@ function LiveNavigation() {
                 <Card.Title>
                     Navigation
                 </Card.Title>
-                <Card.Description>Directions to go here</Card.Description>
+                <Card.Description>{maneuver && maneuver.instruction}</Card.Description>
             </Card.Body>
         </Card.Root>
     );
 }
 
 export default function Navigation() {
-    const navigating = useStateStore((state) => state.navigating);
+    const navigating = useStateStore((state) => state.navRoute != null);
     // TODO settings button for navigation settings
     // TODO method to set "from" to "current location" widget. For now, always assume "from" current location.
     // TODO switch to live directions when a destination is entered

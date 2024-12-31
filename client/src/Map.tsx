@@ -47,8 +47,17 @@ export default function Map() {
         });
 
         // Disable tracking when starting a drag.
-        map.on("mousedown", (_) => setTracking(false));
-        map.on("contextmenu", (e) => requestReverseGeocodingLookup(e.lngLat));
+        map.on("mousedown", (e) => {
+            const button = e.originalEvent.button
+            if (button === 0) {
+                // Left click
+                setTracking(false);
+            } else if (button == 2) {
+                // Right click
+                requestReverseGeocodingLookup(e.lngLat);
+                e.preventDefault();
+            }
+        });
 
         setMap(map);
     }, []);

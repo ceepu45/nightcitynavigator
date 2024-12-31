@@ -108,6 +108,7 @@ pub async fn udp_updater(state_lock: crate::StateLock) -> anyhow::Result<()> {
         let point = GpsPoint::from_game_location(&game_location)?;
 
         let mut state = state_lock.lock().await;
+        tracing::debug!("Got packet type {}", game_location.loc_type);
         match game_location.loc_type {
             0 => state.player_location = Some(point),
             t => tracing::warn!("Recieved unrecognized location type: {t}"),

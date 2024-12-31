@@ -1,29 +1,40 @@
 import { create } from 'zustand'
-import { Map, LngLat, Marker } from "maplibre-gl";
-import { createDirectionsRequest, parsePolylines } from './valhalla';
+import { Map, LngLat, Marker, GeoJSONSource } from "maplibre-gl";
+import { createDirectionsRequest, parseManeuvers, parsePolylines, projectToSegment } from './valhalla';
 import { RouteResponse } from './valhallaTypes';
+import playerSvg from "./navigation-2.svg";
 
 const MAX_POSITION_AGE = 10000;
+
+const ROUTE_DISTANCE_SQ_MAX = 50 * 50;
 
 const NOMINATIM_URL = "https://maps.cpusocket.net/nominatim"
 const VALHALLA_URL = "https://maps.cpusocket.net/valhalla"
 
+interface NavInfo {
+    route: [number, number][]
+    maneuvers: Maneuver[]
+}
+
 type State = {
-    navigating: boolean
     recording: boolean
     tracking: boolean
     map: Map | null
 
     playerMarker: Marker
+    debugMarker: Marker
     playerValid: boolean
     destMarker: Marker
 
     destination: LngLat | null
     dest_search: string
+
+    navRoute: NavInfo | null
+    currentSegment: number
+    currentManeuver: number
 }
 
 type Action = {
-    exitNavigation: () => void
     setRecording: (recording: boolean) => void
     setTracking: (tracking: boolean) => void
     setMap: (map: Map) => void
@@ -39,6 +50,10 @@ type Action = {
 
     requestDirections: () => void
     recieveDirections: (data: RouteResponse) => void
+    updateRouteLine: () => void
+
+    exitNavigation: () => void
+    updateNavigation: () => void
 }
 
 interface GpsPoint {
@@ -62,20 +77,32 @@ interface NominatimPlace {
 
 export default create<State & Action>((set, get) => {
 
-    const playerMarker = new Marker();
-    const destMarker = new Marker();
+    const playerElement = new Image(40, 40);
+    playerElement.className = "marker";
+    playerElement.src = playerSvg;
+    //playerElement.style.background = `url("${playerSvg}")`;
+    //playerElement.style.width = "40px";
+    //playerElement.style.height = "40px";
+
+    const playerMarker = new Marker({ element: playerElement });
+    const debugMarker = new Marker({ color: "#FF0000" });
+    const destMarker = new Marker({ color: "#8888FF" });
 
     return {
-        navigating: false,
         recording: false,
         tracking: false,
         map: null,
         playerMarker: playerMarker,
+        debugMarker: debugMarker,
         playerValid: false,
         destMarker: destMarker,
 
         destination: null,
         dest_search: "",
+
+        navRoute: null,
+        currentSegment: 0,
+        currentManeuver: 0,
 
         setRecording: recording => {
             fetch(`/api/logging?on=${recording}`)
@@ -134,6 +161,10 @@ export default create<State & Action>((set, get) => {
                     map.panTo(point, { animate: true, duration: 0.1 });
                 }
             }
+
+            if (get().navRoute) {
+                get().updateNavigation();
+            }
         },
 
         clearPlayerPosition: () => {
@@ -155,7 +186,7 @@ export default create<State & Action>((set, get) => {
 
         requestReverseGeocodingLookup: location => {
             // Abort if we are currently naviagting to a different location
-            if (get().navigating) {
+            if (get().navRoute != null) {
                 return;
             }
 
@@ -232,30 +263,50 @@ export default create<State & Action>((set, get) => {
             }
 
             const route = parsePolylines(data.trip);
-            map.addLayer({
-                id: "route",
-                type: "line",
-                source: {
-                    type: "geojson",
-                    data: {
-                        type: "Feature",
-                        geometry: {
-                            type: "LineString",
-                            coordinates: route,
-                        },
-                        properties: {
-                            title: "Route line"
-                        }
-                    },
-                },
-                paint: {
-                    "line-color": "#5072c9",
-                    "line-opacity": 0.6,
-                    "line-width": 8,
-                },
-            });
+            const maneuvers = parseManeuvers(data.trip);
+            const newRoute: NavInfo = { route, maneuvers };
+            set(() => ({ navRoute: newRoute, currentSegment: 0 }));
+            get().updateRouteLine();
+        },
 
-            set(() => ({ navigating: true }));
+        updateRouteLine: () => {
+            const map = get().map;
+            const navRoute = get().navRoute;
+            const currSegment = get().currentSegment;
+            if (!map || !navRoute) {
+                return;
+            }
+
+            const route = navRoute.route.slice(currSegment);
+
+            const routeJson: GeoJSON.GeoJSON = {
+                type: "Feature",
+                geometry: {
+                    type: "LineString",
+                    coordinates: route,
+                },
+                properties: {
+                    title: "Route line"
+                }
+            };
+            let routeSource: GeoJSONSource | undefined = map.getSource("route");
+            if (routeSource) {
+                routeSource.setData(routeJson);
+            } else {
+                map.addLayer({
+                    id: "route",
+                    type: "line",
+                    source: {
+                        type: "geojson",
+                        data: routeJson,
+                    },
+                    paint: {
+                        "line-color": "#5072c9",
+                        "line-opacity": 0.6,
+                        "line-width": 8,
+                    },
+                });
+            }
         },
 
         exitNavigation: () => {
@@ -264,8 +315,62 @@ export default create<State & Action>((set, get) => {
                 map.removeLayer("route");
                 map.removeSource("route");
             }
-            set(() => ({ navigating: false }));
+            set(() => ({ navRoute: null }));
         },
+
+        updateNavigation: () => {
+            const map = get().map;
+            const navRoute = get().navRoute;
+            const currSegment = get().currentSegment;
+            if (!map || !navRoute) {
+                return;
+            }
+
+            const playerPosition = get().playerMarker.getLngLat();
+            const segmentStart = navRoute.route[currSegment];
+            const segmentEnd = navRoute.route[currSegment + 1];
+            const { percent, distanceSq, point } = projectToSegment(segmentStart, segmentEnd, playerPosition);
+
+            // get().debugMarker.setLngLat(point.toLngLat());
+            // get().debugMarker.addTo(map);
+
+            // If the player deviates from the route, recalculate the path.
+            if (distanceSq > ROUTE_DISTANCE_SQ_MAX) {
+                console.log(`Recalculating route (${distanceSq})`);
+                get().requestDirections();
+            } else if (percent >= 1.0) {
+                console.log("Updating route progression")
+                if (currSegment + 2 >= navRoute.route.length) {
+                    console.log("Navigation Complete");
+                    get().exitNavigation();
+                } else {
+                    set((state) => {
+                        const nextSegment = state.currentSegment + 1;
+                        const currManeuver = state.navRoute!.maneuvers[state.currentManeuver];
+                        let nextManeuver = state.currentManeuver;
+                        if (nextSegment >= currManeuver.begin_shape_index) {
+                            nextManeuver += 1;
+                            const m = state.navRoute!.maneuvers[nextManeuver];
+                            console.log(`Next maneuver: '${m.instruction}' (${m.begin_shape_index} .. ${m.end_shape_index})`);
+                        }
+                        console.log(`current segment: ${nextSegment}`);
+
+                        return { currentSegment: nextSegment, currentManeuver: nextManeuver };
+                    });
+                }
+            } else {
+                set((state) => {
+                    const route = state.navRoute!.route.slice();
+                    const maneuvers = state.navRoute!.maneuvers.slice();
+                    route[state.currentSegment] = point.toLngLat().toArray();
+
+                    const newRoute = { route, maneuvers };
+                    return { navRoute: newRoute };
+                });
+            }
+
+            get().updateRouteLine();
+        }
     }
 });
 

@@ -70,7 +70,7 @@ interface Maneuver {
     begin_street_names?: string[]
     time: number
     length: number
-    begin_shape_index: numbeer
+    begin_shape_index: number
     end_shape_index: number
     toll: boolean
     highway: boolean
