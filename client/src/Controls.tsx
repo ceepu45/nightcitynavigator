@@ -7,8 +7,10 @@ import useStateStore from "@/stateStore";
 export default function Controls() {
     const recording = useStateStore((state) => state.recording);
     const tracking = useStateStore((state) => state.tracking);
+    const trackingRotation = useStateStore((state) => state.trackingRotation);
     const setRecording = useStateStore((state) => state.setRecording);
     const setTracking = useStateStore((state) => state.setTracking);
+    const setTrackingRotation = useStateStore((state) => state.setTrackingRotation);
     const zoomIn = useStateStore((state) => state.zoomIn);
     const zoomOut = useStateStore((state) => state.zoomOut);
     // TODO settings button for navigation settings
@@ -35,6 +37,12 @@ export default function Controls() {
                     onClick={zoomOut}
                 >
                     <LuZoomOut />
+                </IconButton>
+                <IconButton
+                    aria-label="Toggle Rotation"
+                    onClick={() => setTrackingRotation(!trackingRotation)}
+                >
+                    {trackingRotation ? <LuLocateFixed /> : <LuLocate />}
                 </IconButton>
             </Group>
             <Stack gap="5"

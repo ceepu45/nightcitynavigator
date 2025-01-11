@@ -77,7 +77,7 @@ impl GpsPoint {
 
         // Get heading (yaw) from quaternion
         let siny_cosp = 2.0 * (game_loc.r * game_loc.k + game_loc.i * game_loc.j);
-        let cosy_cosp = 1.0 - 2.0 * (game_loc.j * game_loc.j + game_loc.i * game_loc.i);
+        let cosy_cosp = 1.0 - 2.0 * (game_loc.j * game_loc.j + game_loc.k * game_loc.k);
         let heading = f64::atan2(siny_cosp as _, cosy_cosp as _);
 
         Ok(GpsPoint {

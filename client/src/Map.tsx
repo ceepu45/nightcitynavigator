@@ -69,7 +69,7 @@ export default function Map() {
                 .then(setPlayerPosition)
                 .catch(clearPlayerPosition);
         }
-        setInterval(update, 1000);
+        setInterval(update, 200);
     }, []);
 
     return <div ref={mapContainer} className="map" />;

@@ -19,6 +19,7 @@ interface NavInfo {
 type State = {
     recording: boolean
     tracking: boolean
+    trackingRotation: boolean
     map: Map | null
 
     playerMarker: Marker
@@ -37,6 +38,7 @@ type State = {
 type Action = {
     setRecording: (recording: boolean) => void
     setTracking: (tracking: boolean) => void
+    setTrackingRotation: (trackingRotation: boolean) => void
     setMap: (map: Map) => void
     zoomIn: () => void
     zoomOut: () => void
@@ -90,7 +92,8 @@ export default create<State & Action>((set, get) => {
 
     return {
         recording: false,
-        tracking: false,
+        tracking: true,
+        trackingRotation: false,
         map: null,
         playerMarker: playerMarker,
         debugMarker: debugMarker,
@@ -125,6 +128,16 @@ export default create<State & Action>((set, get) => {
             return { tracking };
         }),
 
+        setTrackingRotation: trackingRotation => set((state) => {
+            const newTracking = trackingRotation && state.tracking;
+            if (state.map && !newTracking) {
+                state.map.rotateTo(0);
+            }
+
+            // Only track rotation when the player is being tracked. Otherwise, just reset rotation.
+            return { trackingRotation: newTracking };
+        }),
+
         // Map Actions
         setMap: map => set(() => ({ map })),
         zoomIn: () => {
@@ -153,13 +166,41 @@ export default create<State & Action>((set, get) => {
                 const marker = get().playerMarker;
 
                 const point = new LngLat(data.lon, data.lat);
+                const bearing = (data.heading * 180.0 / 3.14159);
                 marker.setLngLat(point);
                 marker.addTo(map);
                 set(() => ({ playerValid: true }));
 
+                // combine map rotation and tracking into one ease movement, so they don't interrupt each other.
+                let mapPosition = undefined;
+                let mapRotation = map.getBearing();
                 if (get().tracking) {
-                    map.panTo(point, { animate: true, duration: 0.1 });
+                    mapPosition = point;
                 }
+                if (get().trackingRotation) {
+                    mapRotation = -bearing;
+                }
+
+                // Don't interrupt any other transformation animation going on.
+                if (!map.isEasing() && (mapPosition !== undefined)) {
+                    map.easeTo({
+                        center: mapPosition,
+                        bearing: mapRotation,
+                        duration: 180,
+                        easing: x => x,
+                    });
+                    /*
+                    map.easeTo({
+                        center: mapPosition,
+                        bearing: mapRotation,
+
+                        duration: 200,
+                        easing: x => x,
+                    });
+                        */
+                }
+
+                marker.setRotation(-bearing - map.getBearing());
             }
 
             if (get().navRoute) {
@@ -265,7 +306,9 @@ export default create<State & Action>((set, get) => {
             const route = parsePolylines(data.trip);
             const maneuvers = parseManeuvers(data.trip);
             const newRoute: NavInfo = { route, maneuvers };
-            set(() => ({ navRoute: newRoute, currentSegment: 0 }));
+
+            // Start navigation, and start tracking the player.
+            set(() => ({ navRoute: newRoute, currentSegment: 0, tracking: true }));
             get().updateRouteLine();
         },
 
