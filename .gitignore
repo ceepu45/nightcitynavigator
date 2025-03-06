@@ -1,3 +1,4 @@
 /target
 /logs/*.csv
 /logs/*.gpx
+/mod/build
