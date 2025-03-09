@@ -1,5 +1,5 @@
 [package]
-name = "cp2077-gps"
+name = "cp2077-gpsserver"
 version = "0.1.0"
 edition = "2021"
 
