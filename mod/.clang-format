@@ -1,1 +1,12 @@
-BasedOnStyle: Chromium
+---
+BasedOnStyle: Google
+IndentWidth: 4
+ColumnLimit: 100
+---
+Language: Cpp
+DerivePointerAlignment: false
+PointerAlignment: Right
+FixNamespaceComments: false
+NamespaceIndentation: All
+
+---
