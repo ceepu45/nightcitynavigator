@@ -2,20 +2,21 @@ import { LngLat, MercatorCoordinate } from "maplibre-gl";
 import { Trip } from "./valhallaTypes";
 
 
-function createLocation(loc: LngLat) {
+function createLocation(loc: LngLat, heading?: number) {
     // TODO include player heading
     return {
         lat: loc.lat,
         lon: loc.lng,
         type: "break",
+        heading: heading,
     }
 }
 
-export function createDirectionsRequest(src: LngLat, dst: LngLat) {
+export function createDirectionsRequest(src: LngLat, dst: LngLat, heading?: number) {
     // TODO costing options
     const data = {
         locations: [
-            createLocation(src),
+            createLocation(src, heading),
             createLocation(dst),
         ],
         costing: "auto",
@@ -115,9 +116,11 @@ export function projectToSegment(segmentStart: [number, number], segmentEnd: [nu
         percent = dotProduct / segLengthSq;
     }
 
+    // Clamp the point to somewhere on the segment.
+    const clampPercent = Math.min(Math.max(percent, 0.0), 1.0);
 
 
-    const point = new MercatorCoordinate(segmentStartMerc.x + segX * percent, segmentStartMerc.y + segY * percent);
+    const point = new MercatorCoordinate(segmentStartMerc.x + segX * clampPercent, segmentStartMerc.y + segY * clampPercent);
 
     const deltaX = positionMerc.x - point.x;
     const deltaY = positionMerc.y - point.y;

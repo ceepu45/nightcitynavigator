@@ -68,8 +68,9 @@ export default function Map() {
                 .then(response => response.json())
                 .then(setPlayerPosition)
                 .catch(clearPlayerPosition);
+            window.requestAnimationFrame(update);
         }
-        setInterval(update, 200);
+        update();
     }, []);
 
     return <div ref={mapContainer} className="map" />;

@@ -81,7 +81,7 @@ function LiveNavigation() {
                 <Card.Title>
                     Navigation
                 </Card.Title>
-                <Card.Description>{maneuver && maneuver.instruction}</Card.Description>
+                <Card.Description>{maneuver && (maneuver.verbal_transition_alert_instruction ?? maneuver.instruction)}</Card.Description>
             </Card.Body>
         </Card.Root>
     );

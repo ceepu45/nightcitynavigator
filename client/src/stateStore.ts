@@ -3,13 +3,14 @@ import { Map, LngLat, Marker, GeoJSONSource } from "maplibre-gl";
 import { createDirectionsRequest, parseManeuvers, parsePolylines, projectToSegment } from './valhalla';
 import { RouteResponse } from './valhallaTypes';
 import playerSvg from "./navigation-2.svg";
+import { toaster } from "@/components/ui/toaster"
 
 const MAX_POSITION_AGE = 10000;
 
 const ROUTE_DISTANCE_SQ_MAX = 50 * 50;
 
 const NOMINATIM_URL = "https://maps.cpusocket.net/nominatim"
-const VALHALLA_URL = "https://maps.cpusocket.net/valhalla"
+const VALHALLA_URL = "https://maps.cpusocket.net/valhalla/"
 
 interface NavInfo {
     route: [number, number][]
@@ -23,6 +24,7 @@ type State = {
     map: Map | null
 
     playerMarker: Marker
+    playerHeading: number
     debugMarker: Marker
     playerValid: boolean
     destMarker: Marker
@@ -31,6 +33,7 @@ type State = {
     dest_search: string
 
     navRoute: NavInfo | null
+    navCalcInProgress: boolean
     currentSegment: number
     currentManeuver: number
 }
@@ -53,6 +56,9 @@ type Action = {
     requestDirections: () => void
     recieveDirections: (data: RouteResponse) => void
     updateRouteLine: () => void
+
+    handleDirectionError: (error: any) => void
+    handleGeocodingError: (error: any) => void
 
     exitNavigation: () => void
     updateNavigation: () => void
@@ -104,6 +110,7 @@ export default create<State & Action>((set, get) => {
         dest_search: "",
 
         navRoute: null,
+        navCalcInProgress: false,
         currentSegment: 0,
         currentManeuver: 0,
 
@@ -169,7 +176,7 @@ export default create<State & Action>((set, get) => {
                 const bearing = (data.heading * 180.0 / 3.14159);
                 marker.setLngLat(point);
                 marker.addTo(map);
-                set(() => ({ playerValid: true }));
+                set(() => ({ playerValid: true, playerHeading: bearing }));
 
                 // combine map rotation and tracking into one ease movement, so they don't interrupt each other.
                 let mapPosition = undefined;
@@ -221,8 +228,14 @@ export default create<State & Action>((set, get) => {
                 format: "jsonv2",
                 limit: "3",
             }).toString())
-                .then(response => response.json())
+                .then(async response => {
+                    if (!response.ok) {
+                        throw new Error("HTTP Status: " + response.status);
+                    }
+                    return response.json();
+                })
                 .then(data => get().recieveGeocodingResponse(data))
+                .catch(get().handleGeocodingError);
         },
 
         requestReverseGeocodingLookup: location => {
@@ -236,7 +249,12 @@ export default create<State & Action>((set, get) => {
                 lon: location.lng.toString(),
                 format: "jsonv2",
             }).toString())
-                .then(response => response.json())
+                .then(async response => {
+                    if (!response.ok) {
+                        throw new Error("HTTP Status: " + response.status);
+                    }
+                    return response.json();
+                })
                 .then(data => {
                     const recieveGeocoding = get().recieveGeocodingResponse;
                     if ("error" in data) {
@@ -252,6 +270,7 @@ export default create<State & Action>((set, get) => {
                         recieveGeocoding([data as NominatimPlace])
                     }
                 })
+                .catch(get().handleGeocodingError);
         },
 
         recieveGeocodingResponse: data => {
@@ -286,15 +305,31 @@ export default create<State & Action>((set, get) => {
                 return;
             }
 
+            if (get().navCalcInProgress) {
+                return;
+            }
+
             const src = get().playerMarker.getLngLat();
             const dest = get().destination!;
 
+
+            set(() => ({ navCalcInProgress: true }));
             fetch(VALHALLA_URL + "/route?" + new URLSearchParams({
-                json: JSON.stringify(createDirectionsRequest(src, dest)),
+                json: JSON.stringify(createDirectionsRequest(src, dest, get().playerHeading)),
             }))
-                .then(response => response.json())
-                .then(get().recieveDirections);
-            // TODO handle failed lookup
+                .then(async response => {
+                    if (!response.ok) {
+                        const data = await response.json();
+                        if (data.error !== undefined) {
+                            throw new Error(data.error);
+                        }
+                        throw new Error(data);
+                    }
+
+                    return response.json();
+                })
+                .then(get().recieveDirections)
+                .catch(get().handleDirectionError);
         },
 
         recieveDirections: (data) => {
@@ -306,10 +341,22 @@ export default create<State & Action>((set, get) => {
             const route = parsePolylines(data.trip);
             const maneuvers = parseManeuvers(data.trip);
             const newRoute: NavInfo = { route, maneuvers };
+            console.log(newRoute);
 
             // Start navigation, and start tracking the player.
-            set(() => ({ navRoute: newRoute, currentSegment: 0, tracking: true }));
+            set(() => ({ navRoute: newRoute, currentSegment: 0, nextSegment: 0, currentManeuver: 0, nextManeuver: 0, tracking: true, navCalcInProgress: false }));
             get().updateRouteLine();
+        },
+
+        handleDirectionError: (error) => {
+            console.error("Failed to look up directions: " + error);
+            toaster.create({ title: "Failed to look up directions", description: error.toString(), type: "error" });
+            set(() => ({ navCalcInProgress: false }));
+        },
+
+        handleGeocodingError: (error) => {
+            console.error("Failed to look up location: " + error);
+            toaster.create({ title: "Failed to look up location", description: error.toString(), type: "error" });
         },
 
         updateRouteLine: () => {
@@ -378,11 +425,11 @@ export default create<State & Action>((set, get) => {
             // get().debugMarker.addTo(map);
 
             // If the player deviates from the route, recalculate the path.
-            if (distanceSq > ROUTE_DISTANCE_SQ_MAX) {
+            if (distanceSq > ROUTE_DISTANCE_SQ_MAX && !get().navCalcInProgress) {
                 console.log(`Recalculating route (${distanceSq})`);
                 get().requestDirections();
             } else if (percent >= 1.0) {
-                console.log("Updating route progression")
+                // console.log(`Updating route progression (${percent}) (${currSegment})`)
                 if (currSegment + 2 >= navRoute.route.length) {
                     console.log("Navigation Complete");
                     get().exitNavigation();
@@ -394,9 +441,9 @@ export default create<State & Action>((set, get) => {
                         if (nextSegment >= currManeuver.begin_shape_index) {
                             nextManeuver += 1;
                             const m = state.navRoute!.maneuvers[nextManeuver];
-                            console.log(`Next maneuver: '${m.instruction}' (${m.begin_shape_index} .. ${m.end_shape_index})`);
+                            // console.log(`Next maneuver: '${m.instruction}' (${m.begin_shape_index} .. ${m.end_shape_index})`);
                         }
-                        console.log(`current segment: ${nextSegment}`);
+                        // console.log(`current segment: ${nextSegment}`);
 
                         return { currentSegment: nextSegment, currentManeuver: nextManeuver };
                     });
