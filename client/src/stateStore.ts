@@ -1,16 +1,14 @@
 import { create } from 'zustand'
 import { Map, LngLat, Marker, GeoJSONSource } from "maplibre-gl";
 import { createDirectionsRequest, parseManeuvers, parsePolylines, projectToSegment } from './valhalla';
-import { RouteResponse } from './valhallaTypes';
+import { RouteResponse, Maneuver } from './valhallaTypes';
 import playerSvg from "./navigation-2.svg";
 import { toaster } from "@/components/ui/toaster"
+import { NOMINATIM_URL, VALHALLA_URL } from "./config"
 
 const MAX_POSITION_AGE = 10000;
 
 const ROUTE_DISTANCE_SQ_MAX = 50 * 50;
-
-const NOMINATIM_URL = "https://maps.cpusocket.net/nominatim"
-const VALHALLA_URL = "https://maps.cpusocket.net/valhalla/"
 
 interface NavInfo {
     route: [number, number][]
@@ -102,6 +100,7 @@ export default create<State & Action>((set, get) => {
         trackingRotation: false,
         map: null,
         playerMarker: playerMarker,
+        playerHeading: 0.0,
         debugMarker: debugMarker,
         playerValid: false,
         destMarker: destMarker,
@@ -440,7 +439,7 @@ export default create<State & Action>((set, get) => {
                         let nextManeuver = state.currentManeuver;
                         if (nextSegment >= currManeuver.begin_shape_index) {
                             nextManeuver += 1;
-                            const m = state.navRoute!.maneuvers[nextManeuver];
+                            // const m = state.navRoute!.maneuvers[nextManeuver];
                             // console.log(`Next maneuver: '${m.instruction}' (${m.begin_shape_index} .. ${m.end_shape_index})`);
                         }
                         // console.log(`current segment: ${nextSegment}`);

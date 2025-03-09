@@ -2,6 +2,7 @@ import { useEffect, useRef } from "react";
 import maplibregl, { LngLatBounds } from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 import useStateStore from "@/stateStore";
+import { TILE_URL } from "./config";
 
 import "./Map.css";
 
@@ -23,7 +24,7 @@ export default function Map() {
                     "raster-tiles": {
                         "type": "raster",
                         "tiles": [
-                            "https://maps.cpusocket.net/tiles/nightcity/{z}/{x}/{y}.png"
+                            TILE_URL,
                         ],
                         "tileSize": 256,
                         "attribution": "Game data (c) CDProjektRed, Map (c) Night City Mapping Project and contributors"

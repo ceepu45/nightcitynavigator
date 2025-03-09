@@ -1,4 +1,4 @@
-interface TripSummary {
+export interface TripSummary {
     time: number
     length: number
     has_toll: boolean
@@ -13,7 +13,7 @@ interface TripSummary {
 }
 
 
-enum ManeuverType {
+export enum ManeuverType {
     None = 0,
     Start = 1,
     StartRight = 2,
@@ -60,7 +60,7 @@ enum ManeuverType {
     BuildingExit = 43,
 }
 
-interface Maneuver {
+export interface Maneuver {
     type: ManeuverType,
     instruction: string,
     verbal_transition_alert_instruction: string
@@ -90,7 +90,7 @@ interface Maneuver {
     bss_maneuver_type?: string
 }
 
-interface TripLeg {
+export interface TripLeg {
     summary: TripSummary
     shape: string
     maneuvers: Maneuver[]
