@@ -4,3 +4,4 @@
 /mod/build
 .cache/
 .xwin-cache/
+dist/

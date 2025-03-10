@@ -192,8 +192,8 @@ export default create<State & Action>((set, get) => {
                     map.easeTo({
                         center: mapPosition,
                         bearing: mapRotation,
-                        duration: 180,
                         easing: x => x,
+                        animate: false,
                     });
                     /*
                     map.easeTo({
