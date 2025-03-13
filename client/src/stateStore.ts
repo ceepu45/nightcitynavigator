@@ -188,12 +188,10 @@ export default create<State & Action>((set, get) => {
                 }
 
                 // Don't interrupt any other transformation animation going on.
-                if (!map.isEasing() && (mapPosition !== undefined)) {
+                if (!map.scrollZoom.isActive() && !map.isEasing() && (mapPosition !== undefined)) {
                     map.easeTo({
                         center: mapPosition,
                         bearing: mapRotation,
-                        easing: x => x,
-                        animate: false,
                     });
                     /*
                     map.easeTo({

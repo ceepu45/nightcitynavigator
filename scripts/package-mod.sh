@@ -28,6 +28,6 @@ cp "./LICENSE" "$pluginfolder/" || exit 1
 # Cyberpunk 2077 game folder for mod installers to work.
 cd "dist/$output" || exit 1
 
-archive="./${output}.zip"
+archive="../${output}.zip"
 rm -f "$archive"
 zip -r "$archive" ./* || exit 1
