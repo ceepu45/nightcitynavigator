@@ -2,6 +2,7 @@ mod gameinterface;
 mod gpslogging;
 
 use std::net::SocketAddr;
+use std::process::ExitCode;
 use std::sync::Arc;
 
 use axum::extract::{Query, State};
@@ -38,7 +39,7 @@ struct Args {
 }
 
 #[tokio::main]
-async fn main() -> Result<(), std::io::Error> {
+async fn main() -> ExitCode {
     tracing_subscriber::fmt::init();
 
     let args = Args::parse();
@@ -56,15 +57,24 @@ async fn main() -> Result<(), std::io::Error> {
     // Spawn game interface thread
     let interface_thread = tokio::spawn(gameinterface::udp_updater(state_lock.clone()));
 
-    println!("listening on http://{}", args.address);
+    tracing::info!("listening on http://{}", args.address);
 
-    let listener = tokio::net::TcpListener::bind(args.address).await.unwrap();
+    let listener = match tokio::net::TcpListener::bind(args.address).await {
+        Ok(v) => v,
+        Err(e) => {
+            tracing::error!("Failed to start server: {e}");
+            return ExitCode::FAILURE;
+        }
+    };
 
-    let result = axum::serve(listener, app).await;
+    if let Err(e) = axum::serve(listener, app).await {
+        tracing::error!("{e}");
+        return ExitCode::FAILURE;
+    }
 
     interface_thread.abort();
 
-    result
+    ExitCode::SUCCESS
 }
 
 async fn location(State(state): State<StateLock>) -> Json<Option<GpsPoint>> {
@@ -88,7 +98,7 @@ async fn logging(
         } else {
             state.logging.stop();
         }
-        params.on
+        state.logging.active()
     } else {
         state.logging.active()
     };

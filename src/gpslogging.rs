@@ -24,7 +24,9 @@ impl GpsLogger {
 
             tokio::spawn(async move {
                 let mut last_updated = Instant::now();
-                logging_task(rx, &mut last_updated).await
+                if let Err(e) = logging_task(rx, &mut last_updated).await {
+                    tracing::error!("Logging failed: {e}");
+                }
             });
             self.0 = Some(tx);
         }
@@ -52,6 +54,9 @@ async fn logging_task(
     mut rx: mpsc::Receiver<GpsPoint>,
     last_updated: &mut Instant,
 ) -> anyhow::Result<()> {
+    // Make sure the logs directory exists.
+    std::fs::create_dir_all("logs/")?;
+
     // Create a file base on the current time.
     let filename = format!("logs/log-{}.csv", Utc::now().format("%FT%H-%M-%S%.f"));
     let inner = File::create(filename).await?;

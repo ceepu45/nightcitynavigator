@@ -1,24 +1,25 @@
-import { IconButton, Group, Stack } from "@chakra-ui/react";
+import { IconButton, /*Group,*/ Stack } from "@chakra-ui/react";
 import { Tooltip } from "@/components/ui/tooltip";
-import { LuZoomIn, LuZoomOut, LuSquare, LuCircle, LuLocate, LuLocateFixed } from "react-icons/lu";
+import { /*LuZoomIn, LuZoomOut,*/ LuSquare, LuCircle, LuLocate, LuLocateFixed } from "react-icons/lu";
 import useStateStore from "@/stateStore";
 
 
 export default function Controls() {
     const recording = useStateStore((state) => state.recording);
     const tracking = useStateStore((state) => state.tracking);
-    const trackingRotation = useStateStore((state) => state.trackingRotation);
+    // const trackingRotation = useStateStore((state) => state.trackingRotation);
     const setRecording = useStateStore((state) => state.setRecording);
     const setTracking = useStateStore((state) => state.setTracking);
-    const setTrackingRotation = useStateStore((state) => state.setTrackingRotation);
-    const zoomIn = useStateStore((state) => state.zoomIn);
-    const zoomOut = useStateStore((state) => state.zoomOut);
+    // const setTrackingRotation = useStateStore((state) => state.setTrackingRotation);
+    // const zoomIn = useStateStore((state) => state.zoomIn);
+    // const zoomOut = useStateStore((state) => state.zoomOut);
     // TODO settings button for navigation settings
     // TODO method to set "from" to "current location" widget. For now, always assume "from" current location.
 
 
     return (
         <>
+            {/*
             <Group attached
                 zIndex="10"
                 pos="absolute"
@@ -45,6 +46,7 @@ export default function Controls() {
                     {trackingRotation ? <LuLocateFixed /> : <LuLocate />}
                 </IconButton>
             </Group>
+            */}
             <Stack gap="5"
                 zIndex="10"
                 pos="absolute"

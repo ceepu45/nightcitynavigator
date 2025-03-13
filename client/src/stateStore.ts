@@ -40,6 +40,7 @@ type Action = {
     setRecording: (recording: boolean) => void
     setTracking: (tracking: boolean) => void
     setTrackingRotation: (trackingRotation: boolean) => void
+    toggleTrackingRotation: () => void
     setMap: (map: Map) => void
     zoomIn: () => void
     zoomOut: () => void
@@ -143,6 +144,8 @@ export default create<State & Action>((set, get) => {
             // Only track rotation when the player is being tracked. Otherwise, just reset rotation.
             return { trackingRotation: newTracking };
         }),
+
+        toggleTrackingRotation: () => get().setTrackingRotation(!get().trackingRotation),
 
         // Map Actions
         setMap: map => set(() => ({ map })),

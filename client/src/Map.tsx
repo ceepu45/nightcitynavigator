@@ -5,6 +5,7 @@ import useStateStore from "@/stateStore";
 import { TILE_URL } from "./config";
 
 import "./Map.css";
+import FollowNavigationControl from "./nav_control";
 
 export default function Map() {
     const mapContainer = useRef(null);
@@ -12,6 +13,7 @@ export default function Map() {
     const setPlayerPosition = useStateStore((state) => state.setPlayerPosition);
     const clearPlayerPosition = useStateStore((state) => state.clearPlayerPosition);
     const setTracking = useStateStore((state) => state.setTracking);
+    const toggleTrackingRotation = useStateStore((state) => state.toggleTrackingRotation);
     const requestReverseGeocodingLookup = useStateStore((state) => state.requestReverseGeocodingLookup);
 
     useEffect(() => {
@@ -59,6 +61,14 @@ export default function Map() {
                 e.preventDefault();
             }
         });
+
+        map.addControl(new FollowNavigationControl(_ => {
+            toggleTrackingRotation();
+        }, {
+            visualizePitch: true,
+            showZoom: true,
+            showCompass: true
+        }));
 
         setMap(map);
     }, []);
