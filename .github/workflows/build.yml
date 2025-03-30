@@ -1,0 +1,88 @@
+name: build
+
+on:
+  push:
+    branches: [ "main" ]
+    tags: [ "v*.*.*" ]
+  pull_request:
+    branches: [ "main" ]
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  # Server needs to be built for both linux and windows, to allow Proton/Wine users to use natively
+  server-build:
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+        include:
+          - os: ubuntu-latest
+            system: linux
+            release_command: scripts/package-server.sh "target/release/cp2077-gpsserver" "server-${{github.ref_name}}-linux" "tar"
+            archive_ext: "tar.zst"
+          - os: windows-latest
+            system: windows
+            release_command: scripts/package-server.ps1 -ExePath "target/release/cp2077-gpsserver.exe" -ArchiveName "server-${{github.ref_name}}-windows"
+            archive_ext: "zip"
+
+    env:
+      ARCHIVE_BASENAME: server-${{github.ref_name}}
+        
+    steps:
+    - uses: actions/checkout@v4
+    - name: Init client files
+      working-directory: ${{ github.workspace }}/client
+      run: npm install
+    - name: Lint Rust
+      run: cargo clippy -- -D warnings
+#    - name: Lint Typescript
+#      working-directory: ${{ github.workspace }}/client
+#      run: npm run lint
+    - name: Build Rust
+      run: cargo build --verbose --release
+    - name: Build Typescript
+      working-directory: ${{ github.workspace }}/client
+      run: npm run build
+    - name: Package
+      if: startsWith(github.event.ref, 'refs/tags/')
+      run: ${{ matrix.release_command }}
+    - name: Release
+      if: startsWith(github.event.ref, 'refs/tags/')
+      uses: softprops/action-gh-release@v2
+      with:
+        files: dist/${{ env.ARCHIVE_BASENAME }}.${{ matrix.archive_ext}}
+
+  # Mod only needs to be built for Windows, to match the game
+  mod-build:
+    runs-on: windows-latest
+
+    env:
+      ARCHIVE_BASENAME: gpsmod-${{github.ref_name}}
+
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        submodules: 'recursive'
+    - uses: ilammy/msvc-dev-cmd@v1
+    - name: Configure CMake
+      run: >
+        cmake -G Ninja
+        -S ./mod
+        -B ${{github.workspace}}/build
+        -DCMAKE_BUILD_TYPE=Release
+        -DCMAKE_CXX_COMPILER=cl
+        -DCMAKE_C_COMPILER=cl
+    - name: Build
+      run: cmake --build ${{github.workspace}}/build --config Release
+    - name: Package Mod
+      if: startsWith(github.event.ref, 'refs/tags/')
+      run: scripts/package-mod.ps1 -DllPath "${{ github.workspace }}/build/src/gpsserver.dll" -ArchiveName "${{ env.ARCHIVE_BASENAME }}"
+    - name: Release
+      if: startsWith(github.event.ref, 'refs/tags/')
+      uses: softprops/action-gh-release@v2
+      with:
+        files: dist/${{ env.ARCHIVE_BASENAME }}.zip
