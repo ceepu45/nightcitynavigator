@@ -12,51 +12,49 @@ env:
 
 jobs:
   # Server needs to be built for both linux and windows, to allow Proton/Wine users to use natively
-#  server-build:
-#    runs-on: ${{ matrix.os }}
-#
-#    strategy:
-#      fail-fast: false
-#      matrix:
-#        os: [ubuntu-latest, windows-latest]
-#        include:
-#          - os: ubuntu-latest
-#            system: linux
-#            serverext: ""
-#            archive_type: "tar"
-#            archive_ext: "tar.zst"
-#          - os: windows-latest
-#            system: windows
-#            serverext: ".exe"
-#            archive_type: "zip"
-#            archive_ext: "zip"
-#
-#    env:
-#      ARCHIVE_BASENAME: server-${{github.ref_name}}
-#        
-#    steps:
-#    - uses: actions/checkout@v4
-#    - name: Init client files
+  server-build:
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+        include:
+          - os: ubuntu-latest
+            system: linux
+            release_command: scripts/package-server.sh "target/release/cp2077-gpsserver" "server-${{github.ref_name}}" "tar"
+            archive_ext: "tar.zst"
+          - os: windows-latest
+            system: windows
+            release_command: scripts/package-server.ps1 -ExePath "target/release/cp2077-gpsserver.exe" -ArchiveName "server-${{github.ref_name}}"
+            archive_ext: "zip"
+
+    env:
+      ARCHIVE_BASENAME: server-${{github.ref_name}}
+        
+    steps:
+    - uses: actions/checkout@v4
+    - name: Init client files
+      working-directory: ${{ github.workspace }}/client
+      run: npm install
+    - name: Lint Rust
+      run: cargo clippy -- -D warnings
+#    - name: Lint Typescript
 #      working-directory: ${{ github.workspace }}/client
-#      run: npm install
-#    - name: Lint Rust
-#      run: cargo clippy -- -D warnings
-##    - name: Lint Typescript
-##      working-directory: ${{ github.workspace }}/client
-##      run: npm run lint
-#    - name: Build Rust
-#      run: cargo build --verbose --release
-#    - name: Build Typescript
-#      working-directory: ${{ github.workspace }}/client
-#      run: npm run build
-#    - name: Package Server
-#      if: startsWith(github.event.ref, 'refs/tags/')
-#      run: scripts/package-server.sh "target/release/cp2077-gpsserver${{ matrix.serverext }}" "$ARCHIVE_BASENAME"  "${{ matrix.archive_type }}"
-#    - name: Release
-#      if: startsWith(github.event.ref, 'refs/tags/')
-#      uses: softprops/action-gh-release@v2
-#      with:
-#        files: dist/${{ env.ARCHIVE_BASENAME }}.${{ matrix.archive_ext}}
+#      run: npm run lint
+    - name: Build Rust
+      run: cargo build --verbose --release
+    - name: Build Typescript
+      working-directory: ${{ github.workspace }}/client
+      run: npm run build
+    - name: Package
+      if: startsWith(github.event.ref, 'refs/tags/')
+      run: ${{ matrix.release_command }}
+    - name: Release
+      if: startsWith(github.event.ref, 'refs/tags/')
+      uses: softprops/action-gh-release@v2
+      with:
+        files: dist/${{ env.ARCHIVE_BASENAME }}.${{ matrix.archive_ext}}
 
   # Mod only needs to be built for Windows, to match the game
   mod-build:
@@ -82,8 +80,7 @@ jobs:
       run: cmake --build ${{github.workspace}}/build --config Release
     - name: Package Mod
       if: startsWith(github.event.ref, 'refs/tags/')
-      run: scripts/package-mod.sh "${{ github.workspace }}/build/src/gpsserver.dll" "$ARCHIVE_BASENAME"
-      shell: bash
+      run: scripts/package-mod.ps1 -DllPath "${{ github.workspace }}/build/src/gpsserver.dll" -ArchiveName "${{ env.ARCHIVE_BASENAME }}"
     - name: Release
       if: startsWith(github.event.ref, 'refs/tags/')
       uses: softprops/action-gh-release@v2
