@@ -56,7 +56,7 @@ jobs:
       if: startsWith(github.event.ref, 'refs/tags/')
       uses: softprops/action-gh-release@v2
       with:
-        files: ${{ env.ARCHIVE_FILE }}
+        files: dist/${{ env.ARCHIVE_FILE }}
 
   # Mod only needs to be built for Windows, to match the game
   mod-build:
@@ -87,4 +87,4 @@ jobs:
       if: startsWith(github.event.ref, 'refs/tags/')
       uses: softprops/action-gh-release@v2
       with:
-        files: ${{ env.ARCHIVE_FILE }}
+        files: dist/${{ env.ARCHIVE_FILE }}
