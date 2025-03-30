@@ -32,7 +32,7 @@ jobs:
             archive_ext: "zip"
 
     env:
-      ARCHIVE_FILE: server-${{github.ref_name}}.${{ matrix.archive_ext}}"
+      ARCHIVE_FILE: server-${{github.ref_name}}.${{ matrix.archive_ext}}
         
     steps:
     - uses: actions/checkout@v4
@@ -56,7 +56,7 @@ jobs:
       if: startsWith(github.event.ref, 'refs/tags/')
       uses: softprops/action-gh-release@v2
       with:
-        files: "${{ env.ARCHIVE_FILE }}"
+        files: ${{ env.ARCHIVE_FILE }}
 
   # Mod only needs to be built for Windows, to match the game
   mod-build:
@@ -87,4 +87,4 @@ jobs:
       if: startsWith(github.event.ref, 'refs/tags/')
       uses: softprops/action-gh-release@v2
       with:
-        files: "${{ env.ARCHIVE_FILE }}"
+        files: ${{ env.ARCHIVE_FILE }}
