@@ -32,6 +32,8 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
+      with:
+        submodules: 'recursive'
     - name: Configure CMake
       run: cmake -G Ninja -S ./mod -B ${{github.workspace}}/modbuild -DCMAKE_BUILD_TYPE=Release
     - name: Build
