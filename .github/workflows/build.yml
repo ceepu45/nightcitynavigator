@@ -22,11 +22,11 @@ jobs:
         include:
           - os: ubuntu-latest
             system: linux
-            release_command: scripts/package-server.sh "target/release/cp2077-gpsserver" "server-${{github.ref_name}}" "tar"
+            release_command: scripts/package-server.sh "target/release/cp2077-gpsserver" "server-${{github.ref_name}}-linux" "tar"
             archive_ext: "tar.zst"
           - os: windows-latest
             system: windows
-            release_command: scripts/package-server.ps1 -ExePath "target/release/cp2077-gpsserver.exe" -ArchiveName "server-${{github.ref_name}}"
+            release_command: scripts/package-server.ps1 -ExePath "target/release/cp2077-gpsserver.exe" -ArchiveName "server-${{github.ref_name}}-windows"
             archive_ext: "zip"
 
     env:
