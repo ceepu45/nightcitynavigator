@@ -1,0 +1,39 @@
+name: build
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  # Server needs to be built for both linux and windows, to allow Proton/Wine users to use natively
+  server-build:
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+        
+    steps:
+    - uses: actions/checkout@v4
+    - name: Linting
+      run: cargo clippy -- -D warnings
+    - name: Build
+      run: cargo build --verbose --release
+
+  # Mod only needs to be built for Windows, to match the game
+  mod-build:
+    runs-on: windows-latest
+
+    steps:
+    - uses: actions/checkout@v4
+    - name: Configure CMake
+      run: cmake -G Ninja -S ./mod -B ${{github.workspace}}/modbuild -DCMAKE_BUILD_TYPE=Release
+    - name: Build
+      run: cmake --build ${{github.workspace}}/modbuild --config Release
+
