@@ -32,7 +32,7 @@ jobs:
             archive_ext: "zip"
 
     env:
-      ARCHIVE_FILE: server-${{github.ref_name}}.${{ matrix.archive_ext}}
+      ARCHIVE_BASENAME: server-${{github.ref_name}}
         
     steps:
     - uses: actions/checkout@v4
@@ -51,19 +51,19 @@ jobs:
       run: npm run build
     - name: Package Server
       if: startsWith(github.event.ref, 'refs/tags/')
-      run: scripts/package-server.sh "target/release/cp2077-gpsserver${{ matrix.serverext }}" "$ARCHIVE_FILE"  "${{ matrix.archive_type }}"
+      run: scripts/package-server.sh "target/release/cp2077-gpsserver${{ matrix.serverext }}" "$ARCHIVE_BASENAME"  "${{ matrix.archive_type }}"
     - name: Release
       if: startsWith(github.event.ref, 'refs/tags/')
       uses: softprops/action-gh-release@v2
       with:
-        files: dist/${{ env.ARCHIVE_FILE }}
+        files: dist/${{ env.ARCHIVE_BASENAME }}.${{ matrix.archive_ext}}
 
   # Mod only needs to be built for Windows, to match the game
   mod-build:
     runs-on: windows-latest
 
     env:
-      ARCHIVE_FILE: gpsmod-${{github.ref_name}}.zip
+      ARCHIVE_BASENAME: gpsmod-${{github.ref_name}}
 
     steps:
     - uses: actions/checkout@v4
@@ -87,4 +87,4 @@ jobs:
       if: startsWith(github.event.ref, 'refs/tags/')
       uses: softprops/action-gh-release@v2
       with:
-        files: dist/${{ env.ARCHIVE_FILE }}
+        files: dist/${{ env.ARCHIVE_BASENAME }}.zip
