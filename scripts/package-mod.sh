@@ -18,7 +18,7 @@ if [ -e "dist/$output" ]; then
     rm -r "dist/$output"
 fi
 
-pluginfolder="dist/$output/red4ext/plugins/gpsserver"
+pluginfolder="dist/$output/red4ext/plugins/nightcitynav"
 mkdir -p "$pluginfolder"
 
 cp "$target" "$pluginfolder/" || exit 1

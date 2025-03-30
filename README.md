@@ -1,4 +1,4 @@
-# Cyberpunk 2077 GPS System
+# Night City Navigator
 
 ## Installation
 

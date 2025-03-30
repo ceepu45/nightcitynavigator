@@ -2,7 +2,7 @@
 
 #include <RED4ext/RED4ext.hpp>
 
-namespace GpsServer {
+namespace NightCityNav {
 
     // void set_app_info(const RED4ext::Sdk *sdk, RED4ext::PluginHandle handle);
 

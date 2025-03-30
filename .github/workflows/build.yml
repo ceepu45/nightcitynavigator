@@ -22,15 +22,15 @@ jobs:
         include:
           - os: ubuntu-latest
             system: linux
-            release_command: scripts/package-server.sh "target/release/cp2077-gpsserver" "server-${{github.ref_name}}-linux" "tar"
+            release_command: scripts/package-server.sh "target/release/nightcitynavigator" "nightcitynavigator-${{github.ref_name}}-linux" "tar"
             archive_ext: "tar.zst"
           - os: windows-latest
             system: windows
-            release_command: scripts/package-server.ps1 -ExePath "target/release/cp2077-gpsserver.exe" -ArchiveName "server-${{github.ref_name}}-windows"
+            release_command: scripts/package-server.ps1 -ExePath "target/release/nightcitynavigator.exe" -ArchiveName "nightcitynavigator-${{github.ref_name}}-windows"
             archive_ext: "zip"
 
     env:
-      ARCHIVE_BASENAME: server-${{github.ref_name}}
+      ARCHIVE_BASENAME: nightcitynavigator-${{github.ref_name}}
         
     steps:
     - uses: actions/checkout@v4
@@ -38,7 +38,7 @@ jobs:
       working-directory: ${{ github.workspace }}/client
       run: npm install
     - name: Lint Rust
-      run: cargo clippy -- -D warnings
+      run: cargo clippy --release -- -D warnings
 #    - name: Lint Typescript
 #      working-directory: ${{ github.workspace }}/client
 #      run: npm run lint
@@ -61,7 +61,7 @@ jobs:
     runs-on: windows-latest
 
     env:
-      ARCHIVE_BASENAME: gpsmod-${{github.ref_name}}
+      ARCHIVE_BASENAME: ncn-gpsmod-${{github.ref_name}}
 
     steps:
     - uses: actions/checkout@v4
@@ -80,7 +80,7 @@ jobs:
       run: cmake --build ${{github.workspace}}/build --config Release
     - name: Package Mod
       if: startsWith(github.event.ref, 'refs/tags/')
-      run: scripts/package-mod.ps1 -DllPath "${{ github.workspace }}/build/src/gpsserver.dll" -ArchiveName "${{ env.ARCHIVE_BASENAME }}"
+      run: scripts/package-mod.ps1 -DllPath "${{ github.workspace }}/build/src/nightcitynav.dll" -ArchiveName "${{ env.ARCHIVE_BASENAME }}"
     - name: Release
       if: startsWith(github.event.ref, 'refs/tags/')
       uses: softprops/action-gh-release@v2

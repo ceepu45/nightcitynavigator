@@ -2,7 +2,7 @@
 
 #include <RED4ext/RED4ext.hpp>
 
-namespace GpsServer {
+namespace NightCityNav {
     class AppInterface {
        public:
         AppInterface(RED4ext::PluginHandle handle, const RED4ext::Sdk *sdk)

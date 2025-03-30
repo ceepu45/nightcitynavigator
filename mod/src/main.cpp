@@ -3,7 +3,7 @@
 #include "app_interface.h"
 #include "updater.h"
 
-using namespace GpsServer;
+using namespace NightCityNav;
 
 RED4EXT_C_EXPORT bool RED4EXT_CALL Main(RED4ext::PluginHandle aHandle, RED4ext::EMainReason aReason,
                                         const RED4ext::Sdk *aSdk) {
@@ -30,7 +30,7 @@ RED4EXT_C_EXPORT bool RED4EXT_CALL Main(RED4ext::PluginHandle aHandle, RED4ext::
 }
 
 RED4EXT_C_EXPORT void RED4EXT_CALL Query(RED4ext::PluginInfo *aInfo) {
-    aInfo->name = L"GPS Server";
+    aInfo->name = L"Night City Navigator";
     aInfo->author = L"ceepu";
     aInfo->version = RED4EXT_SEMVER(1, 0, 0);
     aInfo->runtime = RED4EXT_RUNTIME_LATEST;

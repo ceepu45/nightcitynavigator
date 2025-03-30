@@ -13,7 +13,7 @@
 #include "app_interface.h"
 #include "updater.h"
 
-namespace GpsServer {
+namespace NightCityNav {
 
     SOCKET udp_socket;
 

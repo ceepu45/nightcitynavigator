@@ -3,7 +3,7 @@
 #include <RED4ext/RED4ext.hpp>
 #include <string_view>
 
-namespace GpsServer {
+namespace NightCityNav {
     std::unique_ptr<AppInterface> app;
 
     void AppInterface::log_trace(const std::string_view &msg) {

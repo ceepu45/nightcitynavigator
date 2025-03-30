@@ -18,7 +18,7 @@ if (Test-Path "dist\$ArchiveName.zip") {
     Remove-Item "dist\$ArchiveName.zip"
 }
 
-$pluginfolder = "dist\$ArchiveName\red4ext\plugins\gpsserver"
+$pluginfolder = "dist\$ArchiveName\red4ext\plugins\nightcitynav"
 New-Item -ItemType Directory -Path $pluginfolder
 
 Copy-Item $DllPath -Destination $pluginfolder
