@@ -30,7 +30,7 @@ jobs:
             archive_ext: "zip"
 
     env:
-      ARCHIVE_BASENAME: nightcitynavigator-${{github.ref_name}}
+      ARCHIVE_BASENAME: nightcitynavigator-${{github.ref_name}}-${{matrix.system}}
         
     steps:
     - uses: actions/checkout@v4
