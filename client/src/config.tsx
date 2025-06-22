@@ -1,6 +1,6 @@
 
 // URL template for the tile server
-export const TILE_URL = "https://tile.nightcitynavigator.com/{z}/{x}/{y}.png";
+export const TILE_URL = "https://tile.nightcitynavigator.com/nightcity/{z}/{x}/{y}.png";
 
 // Base URL for nominatim
 export const NOMINATIM_URL = "https://nominatim.nightcitynavigator.com";
