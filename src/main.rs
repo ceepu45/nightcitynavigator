@@ -34,7 +34,7 @@ type StateLock = Arc<Mutex<AppState>>;
 
 #[derive(Parser, Debug)]
 struct Args {
-    #[arg(default_value = "0.0.0.0:3000")]
+    #[arg(default_value = "127.0.0.1:3000")]
     address: SocketAddr,
 }
 
