@@ -10,8 +10,8 @@ Requirements:
  - [RED4ext](https://docs.red4ext.com/getting-started/installing-red4ext)
 
 1. Find the latest release on the [Releases](https://github.com/ceepu45/nightcitynavigator/releases) page.
-2. Download 'ncn-gpsmod-<version>.zip', and either extract it into your Cyberpunk 2077 game directory, or install it using your mod manager.
-3. Download 'nightcitynavigator-<version>-windows.zip', and extract to somewhere convenient (NOT your game directory).
+2. Download 'ncn-gpsmod-\<version\>.zip', and either extract it into your Cyberpunk 2077 game directory, or install it using your mod manager.
+3. Download 'nightcitynavigator-\<version\>-windows.zip', and extract to somewhere convenient (NOT your game directory).
 
 ### Usage
 1. Launch the game
