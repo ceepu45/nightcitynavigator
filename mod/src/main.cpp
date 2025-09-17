@@ -32,8 +32,8 @@ RED4EXT_C_EXPORT bool RED4EXT_CALL Main(RED4ext::PluginHandle aHandle, RED4ext::
 RED4EXT_C_EXPORT void RED4EXT_CALL Query(RED4ext::PluginInfo *aInfo) {
     aInfo->name = L"Night City Navigator";
     aInfo->author = L"ceepu";
-    aInfo->version = RED4EXT_SEMVER(0, 5, 0);
-    aInfo->runtime = RED4EXT_RUNTIME_LATEST;
+    aInfo->version = RED4EXT_SEMVER(0, 6, 0);
+    aInfo->runtime = RED4EXT_RUNTIME_INDEPENDENT;
     aInfo->sdk = RED4EXT_SDK_LATEST;
 }
 
