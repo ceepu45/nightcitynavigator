@@ -5,7 +5,7 @@
 namespace NightCityNav {
     class AppInterface {
        public:
-        AppInterface(RED4ext::PluginHandle handle, const RED4ext::Sdk *sdk)
+        AppInterface(RED4ext::v1::PluginHandle handle, const RED4ext::v1::Sdk *sdk)
             : handle(handle), sdk(*sdk) {}
 
         void log_trace(const std::string_view &msg);
@@ -46,8 +46,8 @@ namespace NightCityNav {
         }
 
        private:
-        RED4ext::PluginHandle handle;
-        const RED4ext::Sdk &sdk;
+        RED4ext::v1::PluginHandle handle;
+        const RED4ext::v1::Sdk &sdk;
     };
 
     extern std::unique_ptr<AppInterface> app;
